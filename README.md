@@ -20,8 +20,14 @@ curl -d "blue-pitaya" http://127.0.0.1:8080/
 
 To test that application requires proper accept header (like `Accept: application/json`) create request with different accept header:
 ```
-curl -H "Accept: application/xml" -d "blue-pitaya" http://127.0.0.1:8080/
+curl -v -H "Accept: application/xml" -d "blue-pitaya" http://127.0.0.1:8080/
 ```
+
+## Possible problems
+
+Github api has rate limis for requests. For unauthenticated requests, the rate limit allows for up to 60 requests per hour. So you can hit the limit pretty fast when testing.
+
+There are no specific "schema" checks for JSON response from github. If github decide to change their API, there can be some errors.
 
 ## Acceptance criteria
 
