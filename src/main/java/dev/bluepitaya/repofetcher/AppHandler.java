@@ -7,6 +7,7 @@ import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
+import org.springframework.web.reactive.function.client.WebClient.ResponseSpec;
 import org.springframework.web.reactive.function.server.ServerRequest;
 import org.springframework.web.reactive.function.server.ServerResponse;
 
@@ -21,6 +22,10 @@ import reactor.core.publisher.Mono;
 
 @Component
 public class AppHandler {
+
+  //change it to true and provide your apiToken to increase rate limit
+  private final boolean useApiToken = false;
+  private final String apiToken = "";
 
   private final WebClient webClient;
 
@@ -37,12 +42,9 @@ public class AppHandler {
 
   public Mono<ServerResponse> response(ServerRequest request) {
     return request.bodyToMono(String.class).flatMap(username -> {
-      String uri = String.format("https://api.github.com/users/%s/repos", username);
+      String uri = String.format("https://api.github.com/users/%s/repos?per_page=100", username);
 
-      return webClient.get()
-          .uri(uri)
-          .accept(MediaType.APPLICATION_JSON)
-          .retrieve()
+      return fetchFromGithubApi(uri)
           .onStatus(status -> status.equals(HttpStatus.NOT_FOUND),
               clientResponse -> Mono.just(new UserNotFoundException()))
           .bodyToFlux(RepoResponse.class)
@@ -65,13 +67,20 @@ public class AppHandler {
   private Mono<List<BranchInfo>> getBranches(String repoName, String userName) {
     String uri = String.format("https://api.github.com/repos/%s/%s/branches", userName, repoName);
 
-    return webClient.get()
-        .uri(uri)
-        .accept(MediaType.APPLICATION_JSON)
-        .retrieve()
+    return fetchFromGithubApi(uri)
         .bodyToFlux(BranchResponse.class)
         .map(item -> new BranchInfo(item.getName(), item.getCommit().getSha()))
         .collectList();
+  }
+
+  private ResponseSpec fetchFromGithubApi(String uri) {
+    var request = webClient.get()
+        .uri(uri)
+        .header("Accept", "application/vnd.github+json")
+        .header("X-GitHub-Api-Version", "2022-11-28");
+
+    return (useApiToken ? request.header("Authorization", String.format("Bearer %s", apiToken)) : request)
+        .retrieve();
   }
 
   private Mono<ServerResponse> userNotFoundResponse(UserNotFoundException e) {
