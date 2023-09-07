@@ -24,6 +24,7 @@ public class RouterConfig {
   private RequestPredicate accept(MediaType mediaType) {
     return request -> {
       List<MediaType> acceptedMediaTypes = request.headers().accept();
+
       return acceptedMediaTypes.stream().anyMatch(mediaType::isCompatibleWith);
     };
   }
