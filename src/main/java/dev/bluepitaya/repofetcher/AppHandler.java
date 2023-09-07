@@ -6,8 +6,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.web.reactive.function.client.WebClient.RequestHeadersSpec;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
-import org.springframework.web.reactive.function.client.WebClient.ResponseSpec;
 import org.springframework.web.reactive.function.server.ServerRequest;
 import org.springframework.web.reactive.function.server.ServerResponse;
 
@@ -44,10 +44,7 @@ public class AppHandler {
     return request.bodyToMono(String.class).flatMap(username -> {
       String uri = String.format("https://api.github.com/users/%s/repos?per_page=100", username);
 
-      return fetchFromGithubApi(uri)
-          .onStatus(status -> status.equals(HttpStatus.NOT_FOUND),
-              clientResponse -> Mono.just(new UserNotFoundException()))
-          .bodyToFlux(RepoResponse.class)
+      return fetchReposRecursive(uri, Flux.empty())
           .filter(item -> !item.isFork())
           .flatMap(item -> {
             Mono<RepoInfo> repoInfo = getBranches(item.getName(), username)
@@ -64,23 +61,42 @@ public class AppHandler {
     });
   }
 
+  private Flux<RepoResponse> fetchReposRecursive(String uri, Flux<RepoResponse> accumulatedItems) {
+    return fetchFromGithubApi(uri)
+        .exchangeToFlux(response -> {
+          if (response.statusCode().equals(HttpStatus.NOT_FOUND)) {
+            return Flux.error(new UserNotFoundException());
+          }
+
+          var currentItems = response.bodyToFlux(RepoResponse.class);
+          var nextAcc = Flux.merge(accumulatedItems, currentItems);
+
+          var nextLinkOptional = new PaginatedResponseParser(response).getNextLink();
+          if (nextLinkOptional.isPresent()) {
+            return fetchReposRecursive(nextLinkOptional.get(), nextAcc);
+          }
+
+          return nextAcc;
+        });
+  }
+
   private Mono<List<BranchInfo>> getBranches(String repoName, String userName) {
-    String uri = String.format("https://api.github.com/repos/%s/%s/branches", userName, repoName);
+    var uri = String.format("https://api.github.com/repos/%s/%s/branches", userName, repoName);
 
     return fetchFromGithubApi(uri)
+        .retrieve()
         .bodyToFlux(BranchResponse.class)
         .map(item -> new BranchInfo(item.getName(), item.getCommit().getSha()))
         .collectList();
   }
 
-  private ResponseSpec fetchFromGithubApi(String uri) {
+  private RequestHeadersSpec<?> fetchFromGithubApi(String uri) {
     var request = webClient.get()
         .uri(uri)
         .header("Accept", "application/vnd.github+json")
         .header("X-GitHub-Api-Version", "2022-11-28");
 
-    return (useApiToken ? request.header("Authorization", String.format("Bearer %s", apiToken)) : request)
-        .retrieve();
+    return (useApiToken ? request.header("Authorization", String.format("Bearer %s", apiToken)) : request);
   }
 
   private Mono<ServerResponse> userNotFoundResponse(UserNotFoundException e) {
