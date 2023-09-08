@@ -10,8 +10,10 @@ import org.springframework.web.reactive.function.server.RouterFunction;
 import org.springframework.web.reactive.function.server.RouterFunctions;
 import org.springframework.web.reactive.function.server.ServerResponse;
 
+import dev.bluepitaya.repofetcher.handlers.AppHandler;
+
 @Configuration
-public class RouterConfig {
+public class AppRouter {
 
   @Bean
   public RouterFunction<ServerResponse> routes(AppHandler handler) {

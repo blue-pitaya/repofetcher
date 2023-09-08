@@ -1,4 +1,4 @@
-package dev.bluepitaya.repofetcher;
+package dev.bluepitaya.repofetcher.handlers;
 
 import java.util.List;
 import java.util.Optional;
@@ -19,12 +19,12 @@ import dev.bluepitaya.repofetcher.model.RepoInfo;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-public class Fetcher {
+public class RepositoriesInfoFetcher {
   private String username;
   private Optional<String> authHeaderValue;
   private WebClient webClient;
 
-  public Fetcher(String username, Optional<String> authHeaderValue, WebClient webClient) {
+  public RepositoriesInfoFetcher(String username, Optional<String> authHeaderValue, WebClient webClient) {
     this.username = username;
     this.authHeaderValue = authHeaderValue;
     this.webClient = webClient;

@@ -1,4 +1,4 @@
-package dev.bluepitaya.repofetcher;
+package dev.bluepitaya.repofetcher.handlers;
 
 import java.util.Optional;
 
@@ -31,6 +31,6 @@ public class AppHandler {
     Optional<String> authHeaderValue = request.headers().header("Authorization").stream().findFirst();
 
     return request.bodyToMono(String.class)
-        .flatMap(username -> new Fetcher(username, authHeaderValue, webClient).fetch());
+        .flatMap(username -> new RepositoriesInfoFetcher(username, authHeaderValue, webClient).fetch());
   }
 }

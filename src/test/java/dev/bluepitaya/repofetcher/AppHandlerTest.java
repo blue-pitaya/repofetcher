@@ -12,11 +12,12 @@ import org.springframework.test.web.reactive.server.WebTestClient;
 import org.springframework.web.reactive.function.client.ClientResponse;
 import org.springframework.web.reactive.function.client.WebClient;
 
+import dev.bluepitaya.repofetcher.handlers.AppHandler;
 import dev.bluepitaya.repofetcher.model.ErrorInfo;
 import reactor.core.publisher.Mono;
 
 @WebFluxTest(controllers = AppHandler.class)
-@Import(RouterConfig.class)
+@Import(AppRouter.class)
 public class AppHandlerTest {
 
   @Autowired

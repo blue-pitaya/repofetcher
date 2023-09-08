@@ -1,4 +1,4 @@
-package dev.bluepitaya.repofetcher;
+package dev.bluepitaya.repofetcher.handlers;
 
 import java.util.Optional;
 import java.util.regex.Matcher;
