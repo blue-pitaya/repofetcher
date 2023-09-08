@@ -13,26 +13,20 @@ This will create server binded to port 8080.
 
 ## Example usage
 
-To fetch information about user `blue-pitaya` run:
+To fetch information about user `blue-pitaya`:
 ```
 curl -d "blue-pitaya" http://127.0.0.1:8080/
+```
+
+To fetch information with github api token (useful, because without it you are limited to 60 reqs/h):
+```
+curl -d "blue-pitaya" -H "Authorization: Bearer <YOUR_TOKEN>" http://127.0.0.1:8080/
 ```
 
 To test that application requires proper accept header (like `Accept: application/json`) create request with different accept header:
 ```
 curl -v -H "Accept: application/xml" -d "blue-pitaya" http://127.0.0.1:8080/
 ```
-
-## Possible problems
-
-Github api has rate limis for requests. For unauthenticated requests, the rate limit allows for up to 60 requests per hour. So you can hit the limit pretty fast when testing. To bypass it, you can use your own apiToken, by chaning code in `AppHandler`:
-```
-//change it to true and provide your apiToken to increase rate limit
-private final boolean useApiToken = false;
-private final String apiToken = "";
-```
-
-There are no specific "schema" checks for JSON response from github. If github decide to change their API, there can be some errors.
 
 ## Acceptance criteria
 
